@@ -1,0 +1,1579 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Catatan Pengeluaran & Pemasukan</title>
+  <style>
+    :root{
+      --bg:#0b1220;
+      --card:#111a2e;
+      --card2:#0f172a;
+      --text:#e5e7eb;
+      --muted:#9ca3af;
+      --line:rgba(255,255,255,.08);
+      --good:#22c55e;
+      --bad:#ef4444;
+      --warn:#f59e0b;
+      --accent:#60a5fa;
+      --shadow: 0 14px 30px rgba(0,0,0,.35);
+      --radius: 18px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      background: radial-gradient(1200px 800px at 30% -10%, rgba(96,165,250,.25), transparent 60%),
+                  radial-gradient(900px 700px at 90% 0%, rgba(34,197,94,.15), transparent 55%),
+                  var(--bg);
+      color:var(--text);
+      font: 14px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+    }
+    .wrap{
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 18px 14px 28px;
+    }
+    header{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      margin-bottom: 14px;
+    }
+    .title{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+    }
+    h1{
+      margin:0;
+      font-size: 20px;
+      letter-spacing:.2px;
+    }
+    .subtitle{
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding: 8px 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255,255,255,.04);
+      color: var(--muted);
+      white-space:nowrap;
+      user-select:none;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1.05fr .95fr;
+      gap: 14px;
+    }
+    @media (max-width: 860px){
+      .grid{ grid-template-columns: 1fr; }
+    }
+
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .card .hd{
+      padding: 14px 14px 10px;
+      border-bottom: 1px solid var(--line);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+    .card .hd b{font-size:14px}
+    .card .bd{ padding: 14px; }
+
+    .row{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    @media (max-width: 520px){
+      .row{ grid-template-columns: 1fr; }
+    }
+
+    label{
+      display:block;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    input, select, button, textarea{
+      width:100%;
+      padding: 12px 12px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: rgba(15,23,42,.65);
+      color: var(--text);
+      outline: none;
+    }
+    input::placeholder, textarea::placeholder{ color: rgba(156,163,175,.7); }
+    input:focus, select:focus, textarea:focus{
+      border-color: rgba(96,165,250,.6);
+      box-shadow: 0 0 0 3px rgba(96,165,250,.15);
+    }
+    textarea{ resize: vertical; min-height: 44px; }
+
+    .btns{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top: 8px;
+    }
+    button{
+      cursor:pointer;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.06);
+      transition: .15s ease;
+      font-weight: 600;
+    }
+    button:hover{ transform: translateY(-1px); background: rgba(255,255,255,.09); }
+    .primary{
+      background: rgba(96,165,250,.18);
+      border-color: rgba(96,165,250,.35);
+    }
+    .primary:hover{ background: rgba(96,165,250,.26); }
+    .danger{
+      background: rgba(239,68,68,.14);
+      border-color: rgba(239,68,68,.35);
+    }
+    .ghost{
+      background: transparent;
+    }
+
+    .stats{
+      display:grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-top: 10px;
+    }
+    @media (max-width: 520px){
+      .stats{ grid-template-columns: 1fr; }
+    }
+    .stat{
+      background: rgba(17,26,46,.55);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 12px;
+    }
+    .stat .k{ color: var(--muted); font-size: 12px; }
+    .stat .v{ margin-top: 6px; font-size: 18px; font-weight: 800; letter-spacing:.2px; }
+    .good{ color: var(--good); }
+    .bad{ color: var(--bad); }
+    .warn{ color: var(--warn); }
+
+    .listTop{
+      display:flex;
+      gap: 10px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:space-between;
+      margin-bottom: 10px;
+    }
+    .listTop .left{
+      display:flex; gap:10px; flex-wrap:wrap; align-items:center;
+    }
+    .chip{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding: 10px 12px;
+      border-radius: 999px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.03);
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    table{
+      width:100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      overflow:hidden;
+      border:1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(17,26,46,.4);
+    }
+    thead th{
+      text-align:left;
+      font-size: 12px;
+      color: var(--muted);
+      padding: 12px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255,255,255,.03);
+    }
+    tbody td{
+      padding: 12px;
+      border-bottom: 1px solid rgba(255,255,255,.06);
+      vertical-align:top;
+    }
+    tbody tr:last-child td{ border-bottom:none; }
+    .amt{ font-weight:800; }
+    .amt.in{ color: var(--good); }
+    .amt.out{ color: var(--bad); }
+    .mini{
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 2px;
+    }
+    .actions{
+      display:flex; gap:8px; flex-wrap:wrap;
+    }
+    .actions button{
+      width:auto;
+      padding: 8px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+    }
+
+    .footNote{
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .hidden{ display:none !important; }
+    .sep{ height: 1px; background: var(--line); margin: 12px 0; }
+
+    .badgeOver{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(239,68,68,.35);
+      background: rgba(239,68,68,.12);
+      color: #fecaca;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    /* ===== WALLET STYLES ===== */
+    .wallet-section{
+      grid-column: 1 / -1;
+    }
+    .wallet-grid{
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
+      gap: 10px;
+    }
+    @media (max-width: 520px){
+      .wallet-grid{ grid-template-columns: repeat(2, 1fr); }
+    }
+    .wallet-item{
+      position: relative;
+      background: rgba(17,26,46,.55);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px;
+      transition: transform .15s ease, box-shadow .15s ease, border-color .2s ease;
+      cursor: default;
+      overflow: hidden;
+    }
+    .wallet-item::before{
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      border-radius: 16px 16px 0 0;
+      opacity: .85;
+      background: var(--w-color, rgba(255,255,255,.2));
+    }
+    .wallet-item:hover{
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0,0,0,.3);
+      border-color: rgba(255,255,255,.15);
+    }
+    .wallet-item .w-icon{
+      font-size: 20px;
+      margin-bottom: 6px;
+    }
+    .wallet-item .w-name{
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .6px;
+      font-weight: 600;
+    }
+    .wallet-item .w-balance{
+      font-size: 16px;
+      font-weight: 800;
+      margin-top: 6px;
+      letter-spacing: .2px;
+    }
+    .wallet-item .w-delta{
+      font-size: 11px;
+      margin-top: 4px;
+      opacity: .85;
+    }
+    .wallet-item .w-edit-btn{
+      position: absolute;
+      top: 10px; right: 10px;
+      width: auto;
+      padding: 4px 8px;
+      font-size: 10px;
+      border-radius: 8px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid var(--line);
+      color: var(--muted);
+      opacity: 0;
+      transition: opacity .15s ease;
+    }
+    .wallet-item:hover .w-edit-btn{
+      opacity: 1;
+    }
+    .wallet-item .w-edit-btn:hover{
+      background: rgba(96,165,250,.18);
+      color: var(--accent);
+    }
+
+    /* Wallet color accents */
+    .wallet-item[data-wallet="bca"]::before{ background: linear-gradient(90deg, #005baa, #0070d4); }
+    .wallet-item[data-wallet="mandiri"]::before{ background: linear-gradient(90deg, #003d79, #f7b731); }
+    .wallet-item[data-wallet="seabank"]::before{ background: linear-gradient(90deg, #00b894, #00cec9); }
+    .wallet-item[data-wallet="dana"]::before{ background: linear-gradient(90deg, #108ee9, #60a5fa); }
+    .wallet-item[data-wallet="ovo"]::before{ background: linear-gradient(90deg, #4c2889, #a855f7); }
+    .wallet-item[data-wallet="btn"]::before{ background: linear-gradient(90deg, #f97316, #facc15); }
+    .wallet-item[data-wallet="indodax"]::before{ background: linear-gradient(90deg, #2563eb, #3b82f6); }
+    .wallet-item[data-wallet="cash"]::before{ background: linear-gradient(90deg, #22c55e, #4ade80); }
+    .wallet-item[data-wallet="koin"]::before{ background: linear-gradient(90deg, #eab308, #fbbf24); }
+
+    .wallet-total{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px;
+      background: rgba(96,165,250,.08);
+      border: 1px solid rgba(96,165,250,.2);
+      border-radius: 16px;
+      margin-bottom: 10px;
+    }
+    .wallet-total .wt-label{
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .wallet-total .wt-value{
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--accent);
+    }
+
+    /* Wallet edit modal */
+    .modal-overlay{
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.6);
+      backdrop-filter: blur(6px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .2s ease;
+    }
+    .modal-overlay.open{
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .modal-box{
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: 0 24px 60px rgba(0,0,0,.5);
+      padding: 24px;
+      width: 90%;
+      max-width: 380px;
+      transform: translateY(20px) scale(.96);
+      transition: transform .25s ease;
+    }
+    .modal-overlay.open .modal-box{
+      transform: translateY(0) scale(1);
+    }
+    .modal-box h3{
+      margin: 0 0 16px;
+      font-size: 16px;
+    }
+    .modal-box label{
+      margin-bottom: 4px;
+    }
+    .modal-box input{
+      margin-bottom: 12px;
+    }
+    .modal-box .btns{
+      margin-top: 4px;
+    }
+
+    /* Add Wallet & Customization Styles */
+    .wallet-add-card{
+      border: 1.5px dashed rgba(255,255,255,.2);
+      border-radius: 16px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      background: rgba(255,255,255,.02);
+      cursor: pointer;
+      transition: all .2s ease;
+      min-height: 110px;
+      color: var(--muted);
+      text-align: center;
+      user-select: none;
+    }
+    .wallet-add-card:hover{
+      background: rgba(96,165,250,.08);
+      border-color: rgba(96,165,250,.5);
+      color: var(--accent);
+      transform: translateY(-2px);
+    }
+    .emoji-chip{
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: rgba(255,255,255,.05);
+      border: 1px solid var(--line);
+      cursor: pointer;
+      font-size: 16px;
+      transition: all .15s ease;
+      user-select: none;
+    }
+    .emoji-chip:hover{
+      background: rgba(255,255,255,.1);
+      transform: scale(1.1);
+    }
+    .emoji-chip.active{
+      background: rgba(96,165,250,.22);
+      border-color: var(--accent);
+      transform: scale(1.1);
+    }
+    .color-swatch{
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: all .15s ease;
+      box-shadow: 0 2px 6px rgba(0,0,0,.35);
+    }
+    .color-swatch:hover{
+      transform: scale(1.18);
+    }
+    .color-swatch.active{
+      border-color: #ffffff;
+      transform: scale(1.18);
+      box-shadow: 0 0 0 2px rgba(255,255,255,.6);
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="title">
+        <div>
+          <h1>Catatan Pengeluaran & Pemasukan</h1>
+          <div class="subtitle">Simpan rapi transaksi harian, lihat sisa budget bulanan, dan pantau saldo berjalan.</div>
+        </div>
+        <div class="pill" id="todayPill">📅</div>
+      </div>
+    </header>
+
+    <div class="grid">
+      <!-- LEFT: INPUT + SETTINGS -->
+      <section class="card">
+        <div class="hd">
+          <b>Pengaturan Bulan & Input Transaksi</b>
+          <span class="pill" id="monthPill">🗓️</span>
+        </div>
+        <div class="bd">
+          <!-- Month/Year + Budget -->
+          <div class="row">
+            <div>
+              <label>Bulan</label>
+              <select id="selMonth"></select>
+            </div>
+            <div>
+              <label>Tahun</label>
+              <select id="selYear"></select>
+            </div>
+          </div>
+
+          <div class="row">
+            <div>
+              <label>Budget Pengeluaran Bulanan (default Rp 620.000)</label>
+              <input id="inpBudget" inputmode="numeric" placeholder="contoh: 620000" />
+            </div>
+            <div>
+              <label>Saldo Awal Bulan (opsional)</label>
+              <input id="inpInitial" inputmode="numeric" placeholder="contoh: 0" />
+            </div>
+          </div>
+
+          <div class="btns">
+            <button class="primary" id="btnSaveSettings">Simpan Pengaturan</button>
+            <button class="ghost" id="btnResetDefaults" title="Kembalikan budget default">Reset ke Default</button>
+          </div>
+
+          <div class="sep"></div>
+
+          <!-- Entry form -->
+          <div class="row">
+            <div>
+              <label>Jenis</label>
+              <select id="inpType">
+                <option value="out">Pengeluaran</option>
+                <option value="in">Pemasukan</option>
+              </select>
+            </div>
+            <div>
+              <label>Nominal</label>
+              <input id="inpAmount" inputmode="numeric" placeholder="contoh: 25000" />
+            </div>
+          </div>
+
+          <div class="row">
+            <div>
+              <label>Tanggal</label>
+              <input id="inpDate" type="date" />
+            </div>
+            <div>
+              <label>Hari (otomatis)</label>
+              <input id="inpDay" placeholder="misal: Senin" />
+            </div>
+          </div>
+
+          <!-- Payment method - now a dropdown with wallet options -->
+          <div class="row">
+            <div style="grid-column:1/-1">
+              <label>Metode Pembayaran / Dompet</label>
+              <select id="inpPayMethod">
+                <option value="">— Pilih Dompet —</option>
+                <option value="BCA">BCA</option>
+                <option value="Mandiri">Mandiri</option>
+                <option value="SeaBank">SeaBank</option>
+                <option value="DANA">DANA</option>
+                <option value="OVO">OVO</option>
+                <option value="BTN">BTN</option>
+                <option value="Indodax">Indodax</option>
+                <option value="Cash">Cash</option>
+                <option value="Koin">Koin</option>
+                <option value="Lainnya">Lainnya</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="row">
+            <div style="grid-column:1/-1">
+              <label>Nama barang / Keterangan (apa yang dibeli / siapa yang ngasih)</label>
+              <textarea id="inpNote" placeholder="contoh: Ayam geprek / Vivi"></textarea>
+            </div>
+          </div>
+
+          <div class="btns">
+            <button class="primary" id="btnAdd">Tambah</button>
+            <button class="ghost hidden" id="btnCancelEdit">Batal Edit</button>
+          </div>
+
+          <div class="sep"></div>
+
+          <div class="btns">
+            <button id="btnExport">Export Data (JSON)</button>
+            <input id="inpImport" type="file" accept="application/json" class="hidden">
+            <button type="button" id="btnImport">Import Data</button>
+            <button class="danger" id="btnClearMonth">Hapus Data Bulan Ini</button>
+          </div>
+
+          <div class="footNote">
+            Saran mentor: jangan biasakan kosongin metode pembayaran. Ini yang paling berguna saat kamu cek ulang "kok saldo berkurang?" (misal: cash bocor vs transfer).
+          </div>
+        </div>
+      </section>
+
+      <!-- RIGHT: SUMMARY + LIST -->
+      <section class="card">
+        <div class="hd">
+          <b>Ringkasan & Riwayat</b>
+          <span id="overBadge" class="badgeOver hidden">⚠️ Budget terlewati</span>
+        </div>
+        <div class="bd">
+          <div class="stats">
+            <div class="stat">
+              <div class="k">Total Pemasukan (bulan ini)</div>
+              <div class="v good" id="sumIn">Rp 0</div>
+            </div>
+            <div class="stat">
+              <div class="k">Total Pengeluaran (bulan ini)</div>
+              <div class="v bad" id="sumOut">Rp 0</div>
+            </div>
+            <div class="stat">
+              <div class="k">Sisa Budget Pengeluaran</div>
+              <div class="v" id="remainBudget">Rp 0</div>
+              <div class="mini" id="budgetInfo">Budget: Rp 0</div>
+            </div>
+            <div class="stat">
+              <div class="k">Saldo Berjalan (Saldo Awal + Masuk - Keluar)</div>
+              <div class="v" id="runningBalance">Rp 0</div>
+              <div class="mini" id="initialInfo">Saldo awal: Rp 0</div>
+            </div>
+          </div>
+
+          <div class="sep"></div>
+
+          <div class="listTop">
+            <div class="left">
+              <span class="chip" id="countChip">0 transaksi</span>
+              <span class="chip" id="rangeChip">—</span>
+            </div>
+            <div style="min-width: 190px;">
+              <input id="inpSearch" placeholder="Cari keterangan / metode..." />
+            </div>
+          </div>
+
+          <div style="overflow:auto;">
+            <table>
+              <thead>
+                <tr>
+                  <th style="min-width:150px;">Tanggal</th>
+                  <th>Keterangan</th>
+                  <th style="min-width:160px;">Metode</th>
+                  <th style="min-width:140px;">Nominal</th>
+                  <th style="min-width:150px;">Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="tbody"></tbody>
+            </table>
+          </div>
+
+          <div class="footNote">
+            Catatan: budget bulanan ini mengontrol <b>pengeluaran</b>, bukan pemasukan. Jadi kalau pemasukan besar, budget pengeluaran tetap harus disiplin.
+          </div>
+        </div>
+      </section>
+
+      <!-- WALLET SECTION (full width) -->
+      <section class="card wallet-section">
+        <div class="hd">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <b>💳 Dompet Saya</b>
+            <button class="primary" id="btnHeaderAddWallet" style="width:auto; padding:5px 12px; font-size:12px; border-radius:999px;">+ Tambah Dompet</button>
+          </div>
+          <span class="pill" id="walletTotalPill">Total: Rp 0</span>
+        </div>
+        <div class="bd">
+          <div class="wallet-total">
+            <div>
+              <div class="wt-label">Total Semua Dompet</div>
+              <div class="wt-value" id="walletGrandTotal">Rp 0</div>
+            </div>
+          </div>
+          <div class="wallet-grid" id="walletGrid"></div>
+          <div class="footNote" style="margin-top:12px;">
+            💡 Saldo dompet otomatis berubah sesuai transaksi. Klik <b>Set Saldo</b> untuk mengatur saldo awal dompet.
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- Wallet Edit Modal -->
+  <div class="modal-overlay" id="walletModal">
+    <div class="modal-box">
+      <h3 id="modalTitle">Set Saldo Dompet</h3>
+      <label>Saldo saat ini</label>
+      <input id="modalBalance" inputmode="numeric" placeholder="contoh: 500000" />
+      <div class="btns" style="justify-content:space-between; align-items:center;">
+        <div style="display:flex; gap:8px;">
+          <button class="primary" id="modalSave" style="width:auto;">Simpan</button>
+          <button class="ghost" id="modalCancel" style="width:auto;">Batal</button>
+        </div>
+        <button class="danger hidden" id="modalDeleteWallet" style="width:auto;">Hapus Dompet</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Tambah Dompet Baru -->
+  <div class="modal-overlay" id="addWalletModal">
+    <div class="modal-box" style="max-width: 420px;">
+      <h3 style="margin: 0 0 16px; font-size: 16px; display:flex; align-items:center; gap:8px;">
+        <span>✨</span> Tambah Dompet Baru
+      </h3>
+      
+      <label>Nama Dompet / Rekening <span style="color:var(--bad)">*</span></label>
+      <input id="newWalletName" placeholder="Contoh: Bank Jago, GoPay, Jenius" />
+
+      <label>Ikon / Emoji</label>
+      <div style="display:flex; gap:8px; align-items:center; margin-bottom:12px;">
+        <input id="newWalletIcon" value="💳" maxlength="4" style="width: 52px; text-align:center; font-size: 20px; padding: 8px;" />
+        <div class="emoji-preset-bar" id="emojiPresetBar" style="display:flex; gap:6px; flex-wrap:wrap; flex:1;">
+          <span class="emoji-chip" data-emoji="🏦">🏦</span>
+          <span class="emoji-chip active" data-emoji="💳">💳</span>
+          <span class="emoji-chip" data-emoji="📱">📱</span>
+          <span class="emoji-chip" data-emoji="💎">💎</span>
+          <span class="emoji-chip" data-emoji="💵">💵</span>
+          <span class="emoji-chip" data-emoji="🪙">🪙</span>
+          <span class="emoji-chip" data-emoji="📈">📈</span>
+          <span class="emoji-chip" data-emoji="💰">💰</span>
+          <span class="emoji-chip" data-emoji="🛒">🛒</span>
+          <span class="emoji-chip" data-emoji="⚡">⚡</span>
+        </div>
+      </div>
+
+      <label>Pilihan Warna Aksen</label>
+      <div class="color-preset-bar" id="colorPresetBar" style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px;"></div>
+
+      <label>Saldo Awal (opsional)</label>
+      <input id="newWalletInitial" inputmode="numeric" placeholder="contoh: 500000 (default 0)" />
+
+      <div class="btns">
+        <button class="primary" id="btnSaveNewWallet">Simpan Dompet</button>
+        <button class="ghost" id="btnCancelNewWallet">Batal</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ===== Helpers =====
+    const DAYS_ID = ["Minggu","Senin","Selasa","Rabu","Kamis","Jumat","Sabtu"];
+    const MONTHS_ID = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
+    const fmtIDR = (n) => new Intl.NumberFormat("id-ID", { style:"currency", currency:"IDR", maximumFractionDigits:0 }).format(n || 0);
+    const toInt = (v) => {
+      if (typeof v === "number") return Math.round(v);
+      const s = String(v ?? "").replace(/[^\d-]/g,"").trim();
+      if (!s) return 0;
+      const x = Number(s);
+      return Number.isFinite(x) ? Math.round(x) : 0;
+    };
+    const pad2 = (x) => String(x).padStart(2,"0");
+    const monthKey = (y, m) => `${y}-${pad2(m)}`; // m = 1..12
+    const dateToKey = (iso) => iso ? iso.slice(0,7) : "";
+
+    // ===== Wallet Config & Color Presets =====
+    const DEFAULT_WALLETS = [
+      { id: "bca",     name: "BCA",     icon: "🏦", color: "linear-gradient(90deg, #005baa, #0070d4)" },
+      { id: "mandiri", name: "Mandiri", icon: "🏛️", color: "linear-gradient(90deg, #003d79, #f7b731)" },
+      { id: "seabank", name: "SeaBank", icon: "🌊", color: "linear-gradient(90deg, #00b894, #00cec9)" },
+      { id: "dana",    name: "DANA",    icon: "💎", color: "linear-gradient(90deg, #108ee9, #60a5fa)" },
+      { id: "ovo",     name: "OVO",     icon: "💜", color: "linear-gradient(90deg, #4c2889, #a855f7)" },
+      { id: "btn",     name: "BTN",     icon: "🔶", color: "linear-gradient(90deg, #f97316, #facc15)" },
+      { id: "indodax", name: "Indodax", icon: "₿",  color: "linear-gradient(90deg, #2563eb, #3b82f6)" },
+      { id: "cash",    name: "Cash",    icon: "💵", color: "linear-gradient(90deg, #22c55e, #4ade80)" },
+      { id: "koin",    name: "Koin",    icon: "🪙", color: "linear-gradient(90deg, #eab308, #fbbf24)" },
+    ];
+
+    const COLOR_PRESETS = [
+      { name: "Biru", gradient: "linear-gradient(90deg, #2563eb, #60a5fa)" },
+      { name: "Hijau", gradient: "linear-gradient(90deg, #059669, #34d399)" },
+      { name: "Ungu", gradient: "linear-gradient(90deg, #7c3aed, #c084fc)" },
+      { name: "Oranye", gradient: "linear-gradient(90deg, #ea580c, #facc15)" },
+      { name: "Cyan", gradient: "linear-gradient(90deg, #0891b2, #38bdf8)" },
+      { name: "Pink", gradient: "linear-gradient(90deg, #db2777, #f472b6)" },
+      { name: "Emas", gradient: "linear-gradient(90deg, #d97706, #fbbf24)" },
+      { name: "Merah", gradient: "linear-gradient(90deg, #dc2626, #f87171)" },
+      { name: "Emerald", gradient: "linear-gradient(90deg, #0d9488, #2dd4bf)" },
+      { name: "Indigo", gradient: "linear-gradient(90deg, #4f46e5, #818cf8)" },
+    ];
+
+    function getWalletList(){
+      const custom = (typeof db !== "undefined" && db && Array.isArray(db.customWallets)) ? db.customWallets : [];
+      return [...DEFAULT_WALLETS, ...custom];
+    }
+
+    // Map payment method text to wallet id (supports exact match or keyword match)
+    function matchWalletId(payMethod){
+      if (!payMethod) return null;
+      const lower = payMethod.toLowerCase().trim();
+      const list = getWalletList();
+      // First try exact match
+      for (const w of list){
+        if (lower === w.id || lower === w.name.toLowerCase()) return w.id;
+      }
+      // Then try substring match (e.g. "Transfer Mandiri", "QRIS BCA")
+      for (const w of list){
+        if (lower.includes(w.id) || lower.includes(w.name.toLowerCase())) return w.id;
+      }
+      return null;
+    }
+
+    // ===== Storage =====
+    const STORAGE_KEY = "catatan_keuangan_v1";
+    function loadDB(){
+      try{
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return { settings:{}, entries:[], wallets:{}, customWallets:[] };
+        const data = JSON.parse(raw);
+        if (!data.settings) data.settings = {};
+        if (!Array.isArray(data.entries)) data.entries = [];
+        if (!data.wallets) data.wallets = {};
+        if (!Array.isArray(data.customWallets)) data.customWallets = [];
+        return data;
+      }catch(e){
+        return { settings:{}, entries:[], wallets:{}, customWallets:[] };
+      }
+    }
+    function saveDB(data){
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }
+
+    // ===== DOM =====
+    const todayPill = document.getElementById("todayPill");
+    const monthPill = document.getElementById("monthPill");
+    const selMonth = document.getElementById("selMonth");
+    const selYear  = document.getElementById("selYear");
+    const inpBudget = document.getElementById("inpBudget");
+    const inpInitial = document.getElementById("inpInitial");
+    const btnSaveSettings = document.getElementById("btnSaveSettings");
+    const btnResetDefaults = document.getElementById("btnResetDefaults");
+
+    const inpType = document.getElementById("inpType");
+    const inpAmount = document.getElementById("inpAmount");
+    const inpDate = document.getElementById("inpDate");
+    const inpDay = document.getElementById("inpDay");
+    const inpPayMethod = document.getElementById("inpPayMethod");
+    const inpNote = document.getElementById("inpNote");
+    const btnAdd = document.getElementById("btnAdd");
+    const btnCancelEdit = document.getElementById("btnCancelEdit");
+
+    const btnClearMonth = document.getElementById("btnClearMonth");
+    const btnExport = document.getElementById("btnExport");
+    const btnImport = document.getElementById("btnImport");
+    const inpImport = document.getElementById("inpImport");
+
+    const sumIn = document.getElementById("sumIn");
+    const sumOut = document.getElementById("sumOut");
+    const remainBudget = document.getElementById("remainBudget");
+    const runningBalance = document.getElementById("runningBalance");
+    const budgetInfo = document.getElementById("budgetInfo");
+    const initialInfo = document.getElementById("initialInfo");
+    const overBadge = document.getElementById("overBadge");
+
+    const tbody = document.getElementById("tbody");
+    const countChip = document.getElementById("countChip");
+    const rangeChip = document.getElementById("rangeChip");
+    const inpSearch = document.getElementById("inpSearch");
+
+    // Wallet DOM
+    const walletGrid = document.getElementById("walletGrid");
+    const walletGrandTotal = document.getElementById("walletGrandTotal");
+    const walletTotalPill = document.getElementById("walletTotalPill");
+    const walletModal = document.getElementById("walletModal");
+    const modalTitle = document.getElementById("modalTitle");
+    const modalBalance = document.getElementById("modalBalance");
+    const modalSave = document.getElementById("modalSave");
+    const modalCancel = document.getElementById("modalCancel");
+    const modalDeleteWallet = document.getElementById("modalDeleteWallet");
+
+    // Add Wallet Modal DOM
+    const btnHeaderAddWallet = document.getElementById("btnHeaderAddWallet");
+    const addWalletModal = document.getElementById("addWalletModal");
+    const newWalletName = document.getElementById("newWalletName");
+    const newWalletIcon = document.getElementById("newWalletIcon");
+    const newWalletInitial = document.getElementById("newWalletInitial");
+    const emojiPresetBar = document.getElementById("emojiPresetBar");
+    const colorPresetBar = document.getElementById("colorPresetBar");
+    const btnSaveNewWallet = document.getElementById("btnSaveNewWallet");
+    const btnCancelNewWallet = document.getElementById("btnCancelNewWallet");
+
+    let selectedColorGradient = COLOR_PRESETS[0].gradient;
+
+    // ===== State =====
+    let db = loadDB();
+    let editingId = null;
+    let editingWalletId = null;
+
+    // ===== Custom Wallet Functions & Presets =====
+    function initColorPresets(){
+      colorPresetBar.innerHTML = "";
+      COLOR_PRESETS.forEach((cp, idx) => {
+        const span = document.createElement("span");
+        span.className = "color-swatch" + (idx === 0 ? " active" : "");
+        span.style.background = cp.gradient;
+        span.title = cp.name;
+        span.addEventListener("click", () => {
+          colorPresetBar.querySelectorAll(".color-swatch").forEach(s => s.classList.remove("active"));
+          span.classList.add("active");
+          selectedColorGradient = cp.gradient;
+        });
+        colorPresetBar.appendChild(span);
+      });
+    }
+
+    function initEmojiChips(){
+      emojiPresetBar.querySelectorAll(".emoji-chip").forEach(chip => {
+        chip.addEventListener("click", () => {
+          emojiPresetBar.querySelectorAll(".emoji-chip").forEach(c => c.classList.remove("active"));
+          chip.classList.add("active");
+          newWalletIcon.value = chip.getAttribute("data-emoji");
+        });
+      });
+      newWalletIcon.addEventListener("input", () => {
+        const val = newWalletIcon.value.trim();
+        emojiPresetBar.querySelectorAll(".emoji-chip").forEach(chip => {
+          chip.classList.toggle("active", chip.getAttribute("data-emoji") === val);
+        });
+      });
+    }
+
+    function syncPaymentMethods(selectedVal){
+      const currentVal = selectedVal !== undefined ? selectedVal : inpPayMethod.value;
+      const list = getWalletList();
+      let html = `<option value="">— Pilih Dompet —</option>`;
+      for (const w of list){
+        html += `<option value="${escapeHtml(w.name)}">${w.icon} ${escapeHtml(w.name)}</option>`;
+      }
+      html += `<option value="Lainnya">Lainnya</option>`;
+      html += `<option value="__add_new__" style="color:var(--accent); font-weight:700;">➕ Tambah Dompet Baru...</option>`;
+      inpPayMethod.innerHTML = html;
+      if (currentVal) {
+        inpPayMethod.value = currentVal;
+      }
+    }
+
+    function openAddWalletModal(){
+      newWalletName.value = "";
+      newWalletIcon.value = "💳";
+      newWalletInitial.value = "";
+      selectedColorGradient = COLOR_PRESETS[0].gradient;
+      initColorPresets();
+      emojiPresetBar.querySelectorAll(".emoji-chip").forEach(c => {
+        c.classList.toggle("active", c.getAttribute("data-emoji") === "💳");
+      });
+      addWalletModal.classList.add("open");
+      setTimeout(() => newWalletName.focus(), 100);
+    }
+
+    function closeAddWalletModal(){
+      addWalletModal.classList.remove("open");
+    }
+
+    function saveNewWallet(){
+      const name = (newWalletName.value || "").trim();
+      if (!name){
+        alert("Nama dompet wajib diisi!");
+        newWalletName.focus();
+        return;
+      }
+
+      // Check if wallet name already exists
+      const list = getWalletList();
+      if (list.some(w => w.name.toLowerCase() === name.toLowerCase())){
+        alert(`Dompet dengan nama "${name}" sudah ada.`);
+        newWalletName.focus();
+        return;
+      }
+
+      const icon = (newWalletIcon.value || "").trim() || "💳";
+      const initial = toInt(newWalletInitial.value);
+      const cleanId = "w_" + name.toLowerCase().replace(/[^a-z0-9]/g, "") + "_" + Date.now().toString(36);
+
+      const newWalletObj = {
+        id: cleanId,
+        name: name,
+        icon: icon,
+        color: selectedColorGradient,
+        custom: true,
+        createdAt: Date.now()
+      };
+
+      if (!Array.isArray(db.customWallets)){
+        db.customWallets = [];
+      }
+      db.customWallets.push(newWalletObj);
+
+      if (!db.wallets){
+        db.wallets = {};
+      }
+      db.wallets[cleanId] = { balance: initial };
+
+      saveDB(db);
+      closeAddWalletModal();
+      syncPaymentMethods(newWalletObj.name);
+      refresh();
+    }
+
+    // ===== Init month/year selectors =====
+    (function initSelectors(){
+      // month
+      selMonth.innerHTML = MONTHS_ID.map((name, i) => `<option value="${i+1}">${name}</option>`).join("");
+      // year: current +/- 4
+      const now = new Date();
+      const y = now.getFullYear();
+      let years = [];
+      for(let k=y-4; k<=y+4; k++) years.push(k);
+      selYear.innerHTML = years.map(v => `<option value="${v}">${v}</option>`).join("");
+
+      selMonth.value = String(now.getMonth()+1);
+      selYear.value = String(y);
+
+      // default date input = today
+      const iso = `${now.getFullYear()}-${pad2(now.getMonth()+1)}-${pad2(now.getDate())}`;
+      inpDate.value = iso;
+      inpDay.value = DAYS_ID[now.getDay()];
+      todayPill.textContent = `📅 ${DAYS_ID[now.getDay()]}, ${now.getDate()} ${MONTHS_ID[now.getMonth()]} ${now.getFullYear()}`;
+
+      initColorPresets();
+      initEmojiChips();
+      syncPaymentMethods();
+      applySettingsToUI();
+      refresh();
+    })();
+
+    // Auto day from date
+    inpDate.addEventListener("change", () => {
+      const d = new Date(inpDate.value);
+      if (!isNaN(d.getTime())) inpDay.value = DAYS_ID[d.getDay()];
+    });
+
+    selMonth.addEventListener("change", () => { applySettingsToUI(); refresh(); });
+    selYear.addEventListener("change", () => { applySettingsToUI(); refresh(); });
+
+    inpSearch.addEventListener("input", () => refresh());
+
+    // Add wallet listeners
+    btnHeaderAddWallet.addEventListener("click", openAddWalletModal);
+    btnCancelNewWallet.addEventListener("click", closeAddWalletModal);
+    addWalletModal.addEventListener("click", (e) => {
+      if (e.target === addWalletModal) closeAddWalletModal();
+    });
+    btnSaveNewWallet.addEventListener("click", saveNewWallet);
+
+    inpPayMethod.addEventListener("change", () => {
+      if (inpPayMethod.value === "__add_new__") {
+        openAddWalletModal();
+        inpPayMethod.value = "";
+      }
+    });
+
+    newWalletName.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        saveNewWallet();
+      } else if (e.key === "Escape") {
+        closeAddWalletModal();
+      }
+    });
+    newWalletInitial.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        saveNewWallet();
+      } else if (e.key === "Escape") {
+        closeAddWalletModal();
+      }
+    });
+
+    function getSelectedKey(){
+      const y = Number(selYear.value);
+      const m = Number(selMonth.value);
+      return `${y}-${pad2(m)}`;
+    }
+
+    function ensureMonthSettings(key){
+      if (!db.settings[key]){
+        db.settings[key] = { budget: 620000, initial: 0 };
+        saveDB(db);
+      } else {
+        if (typeof db.settings[key].budget !== "number") db.settings[key].budget = 620000;
+        if (typeof db.settings[key].initial !== "number") db.settings[key].initial = 0;
+      }
+    }
+
+    function applySettingsToUI(){
+      const key = getSelectedKey();
+      ensureMonthSettings(key);
+      const s = db.settings[key];
+      inpBudget.value = s.budget ?? 620000;
+      inpInitial.value = s.initial ?? 0;
+
+      const mName = MONTHS_ID[Number(selMonth.value)-1];
+      monthPill.textContent = `🗓️ ${mName} ${selYear.value}`;
+    }
+
+    btnSaveSettings.addEventListener("click", () => {
+      const key = getSelectedKey();
+      ensureMonthSettings(key);
+
+      const budget = toInt(inpBudget.value);
+      if (budget <= 0){
+        alert("Budget harus lebih dari 0.");
+        return;
+      }
+      const initial = toInt(inpInitial.value);
+
+      db.settings[key].budget = budget;
+      db.settings[key].initial = initial;
+      saveDB(db);
+      refresh();
+    });
+
+    btnResetDefaults.addEventListener("click", () => {
+      inpBudget.value = 620000;
+    });
+
+    // ===== Add / Edit =====
+    btnAdd.addEventListener("click", () => {
+      const type = inpType.value; // "in" | "out"
+      const amount = toInt(inpAmount.value);
+      const date = inpDate.value;
+      const day = (inpDay.value || "").trim();
+      const payMethod = (inpPayMethod.value || "").trim();
+      const note = (inpNote.value || "").trim();
+
+      if (!date){
+        alert("Tanggal wajib diisi.");
+        return;
+      }
+      if (amount <= 0){
+        alert("Nominal harus lebih dari 0.");
+        return;
+      }
+      if (!note){
+        alert("Keterangan wajib diisi (nama barang / siapa yang ngasih).");
+        return;
+      }
+
+      const key = dateToKey(date);
+      ensureMonthSettings(key);
+
+      if (editingId){
+        const idx = db.entries.findIndex(e => e.id === editingId);
+        if (idx >= 0){
+          db.entries[idx] = {
+            ...db.entries[idx],
+            type,
+            amount,
+            date,
+            day: day || DAYS_ID[new Date(date).getDay()],
+            payMethod: payMethod || "-",
+            note
+          };
+        }
+        editingId = null;
+        btnCancelEdit.classList.add("hidden");
+        btnAdd.textContent = "Tambah";
+      } else {
+        db.entries.push({
+          id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2),
+          type,
+          amount,
+          date,
+          day: day || DAYS_ID[new Date(date).getDay()],
+          payMethod: payMethod || "-",
+          note,
+          createdAt: Date.now()
+        });
+      }
+
+      saveDB(db);
+      clearForm();
+      // Auto switch month/year to entry date month
+      const d = new Date(date);
+      selMonth.value = String(d.getMonth()+1);
+      selYear.value = String(d.getFullYear());
+      applySettingsToUI();
+      refresh();
+    });
+
+    btnCancelEdit.addEventListener("click", () => {
+      editingId = null;
+      btnCancelEdit.classList.add("hidden");
+      btnAdd.textContent = "Tambah";
+      clearForm();
+    });
+
+    function clearForm(){
+      inpAmount.value = "";
+      inpPayMethod.value = "";
+      inpNote.value = "";
+      // keep date
+    }
+
+    // ===== Clear month =====
+    btnClearMonth.addEventListener("click", () => {
+      const key = getSelectedKey();
+      const ok = confirm(`Hapus semua transaksi untuk ${key}? Ini tidak bisa dibatalkan.`);
+      if (!ok) return;
+
+      db.entries = db.entries.filter(e => dateToKey(e.date) !== key);
+      saveDB(db);
+      refresh();
+    });
+
+    // ===== Export / Import =====
+    btnExport.addEventListener("click", () => {
+      const blob = new Blob([JSON.stringify(db, null, 2)], { type:"application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `catatan-keuangan-backup-${new Date().toISOString().slice(0,10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    });
+
+    btnImport.addEventListener("click", () => inpImport.click());
+    inpImport.addEventListener("change", async () => {
+      const file = inpImport.files?.[0];
+      if (!file) return;
+      try{
+        const txt = await file.text();
+        const incoming = JSON.parse(txt);
+        if (!incoming || typeof incoming !== "object") throw new Error("Format tidak valid.");
+        if (!incoming.settings) incoming.settings = {};
+        if (!Array.isArray(incoming.entries)) incoming.entries = [];
+        if (!incoming.wallets) incoming.wallets = {};
+        if (!Array.isArray(incoming.customWallets)) incoming.customWallets = [];
+        db = incoming;
+        saveDB(db);
+        syncPaymentMethods();
+        applySettingsToUI();
+        refresh();
+        alert("Import berhasil.");
+      }catch(e){
+        alert("Import gagal: file tidak valid.");
+      } finally {
+        inpImport.value = "";
+      }
+    });
+
+    // ===== Wallet Modal =====
+    function openWalletModal(walletId){
+      const list = getWalletList();
+      const w = list.find(x => x.id === walletId);
+      if (!w) return;
+      editingWalletId = walletId;
+      modalTitle.textContent = `Set Saldo — ${w.icon} ${w.name}`;
+      const current = db.wallets[walletId]?.balance ?? 0;
+      modalBalance.value = current;
+
+      if (modalDeleteWallet){
+        modalDeleteWallet.classList.toggle("hidden", !w.custom);
+      }
+
+      walletModal.classList.add("open");
+      setTimeout(() => modalBalance.focus(), 100);
+    }
+
+    function closeWalletModal(){
+      walletModal.classList.remove("open");
+      editingWalletId = null;
+    }
+
+    modalCancel.addEventListener("click", closeWalletModal);
+    walletModal.addEventListener("click", (e) => {
+      if (e.target === walletModal) closeWalletModal();
+    });
+
+    modalSave.addEventListener("click", () => {
+      if (!editingWalletId) return;
+      const val = toInt(modalBalance.value);
+      if (!db.wallets[editingWalletId]){
+        db.wallets[editingWalletId] = { balance: 0 };
+      }
+      db.wallets[editingWalletId].balance = val;
+      saveDB(db);
+      closeWalletModal();
+      refresh();
+    });
+
+    modalDeleteWallet.addEventListener("click", () => {
+      if (!editingWalletId) return;
+      const list = getWalletList();
+      const w = list.find(x => x.id === editingWalletId);
+      if (!w) return;
+
+      const txCount = db.entries.filter(e => matchWalletId(e.payMethod) === editingWalletId).length;
+      let msg = `Hapus dompet "${w.name}"?`;
+      if (txCount > 0){
+        msg += `\n\nPerhatian: ada ${txCount} riwayat transaksi yang menggunakan dompet ini. Catatan transaksi tidak akan dihapus, namun dompet ini akan dihilangkan dari daftar.`;
+      }
+      if (!confirm(msg)) return;
+
+      if (Array.isArray(db.customWallets)){
+        db.customWallets = db.customWallets.filter(x => x.id !== editingWalletId);
+      }
+      if (db.wallets && db.wallets[editingWalletId]){
+        delete db.wallets[editingWalletId];
+      }
+      saveDB(db);
+      closeWalletModal();
+      syncPaymentMethods();
+      refresh();
+    });
+
+    modalBalance.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        modalSave.click();
+      } else if (e.key === "Escape") {
+        closeWalletModal();
+      }
+    });
+
+    // ===== Wallet Calculation =====
+    function calcWalletBalances(){
+      const list = getWalletList();
+      // Start with set balances
+      const balances = {};
+      for (const w of list){
+        balances[w.id] = db.wallets[w.id]?.balance ?? 0;
+      }
+
+      // Compute deltas from ALL entries (not just current month)
+      const deltas = {};
+      for (const w of list) deltas[w.id] = { totalIn: 0, totalOut: 0 };
+
+      for (const e of db.entries){
+        const wid = matchWalletId(e.payMethod);
+        if (!wid || !deltas[wid]) continue;
+        if (e.type === "in"){
+          deltas[wid].totalIn += e.amount;
+        } else {
+          deltas[wid].totalOut += e.amount;
+        }
+      }
+
+      // Final = base + in - out
+      const results = {};
+      for (const w of list){
+        const base = balances[w.id] || 0;
+        const d = deltas[w.id] || { totalIn: 0, totalOut: 0 };
+        results[w.id] = {
+          base,
+          current: base + d.totalIn - d.totalOut,
+          totalIn: d.totalIn,
+          totalOut: d.totalOut,
+        };
+      }
+      return results;
+    }
+
+    // ===== Render =====
+    function refresh(){
+      const key = getSelectedKey();
+      ensureMonthSettings(key);
+
+      const search = (inpSearch.value || "").trim().toLowerCase();
+
+      const entries = db.entries
+        .filter(e => dateToKey(e.date) === key)
+        .filter(e => {
+          if (!search) return true;
+          const note = (e.note || "").toLowerCase();
+          const pm = (e.payMethod || "").toLowerCase();
+          return note.includes(search) || pm.includes(search);
+        })
+        .sort((a,b) => (a.date.localeCompare(b.date)) || ((a.createdAt||0) - (b.createdAt||0)));
+
+      // Summaries
+      let totalIn = 0, totalOut = 0;
+      for (const e of entries){
+        if (e.type === "in") totalIn += e.amount;
+        else totalOut += e.amount;
+      }
+
+      const budget = db.settings[key].budget || 620000;
+      const initial = db.settings[key].initial || 0;
+
+      const remain = budget - totalOut;
+      const balance = initial + totalIn - totalOut;
+
+      sumIn.textContent = fmtIDR(totalIn);
+      sumOut.textContent = fmtIDR(totalOut);
+
+      remainBudget.textContent = fmtIDR(remain);
+      remainBudget.className = "v " + (remain < 0 ? "bad" : remain <= Math.round(budget*0.15) ? "warn" : "good");
+
+      runningBalance.textContent = fmtIDR(balance);
+      runningBalance.className = "v " + (balance < 0 ? "bad" : "good");
+
+      budgetInfo.textContent = `Budget: ${fmtIDR(budget)}`;
+      initialInfo.textContent = `Saldo awal: ${fmtIDR(initial)}`;
+
+      overBadge.classList.toggle("hidden", !(remain < 0));
+
+      // chips
+      countChip.textContent = `${entries.length} transaksi`;
+      if (entries.length){
+        const first = entries[0].date;
+        const last = entries[entries.length-1].date;
+        rangeChip.textContent = `${first} → ${last}`;
+      } else {
+        rangeChip.textContent = "Belum ada transaksi";
+      }
+
+      // table
+      tbody.innerHTML = "";
+      if (!entries.length){
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td colspan="5" style="color: rgba(156,163,175,.85); padding: 16px;">Belum ada data. Yuk input transaksi pertama kamu.</td>`;
+        tbody.appendChild(tr);
+      } else {
+        for (const e of entries){
+          const tr = document.createElement("tr");
+          const isIn = e.type === "in";
+          tr.innerHTML = `
+            <td>
+              <div><b>${e.date}</b></div>
+              <div class="mini">${escapeHtml(e.day || "-")}</div>
+            </td>
+            <td>
+              <div>${escapeHtml(e.note)}</div>
+            </td>
+            <td>
+              <div>${escapeHtml(e.payMethod || "-")}</div>
+            </td>
+            <td>
+              <div class="amt ${isIn ? "in":"out"}">${isIn ? "+" : "-"} ${fmtIDR(e.amount)}</div>
+            </td>
+            <td>
+              <div class="actions">
+                <button class="ghost" data-act="edit" data-id="${e.id}">Edit</button>
+                <button class="danger" data-act="del" data-id="${e.id}">Hapus</button>
+              </div>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        }
+
+        // actions listener
+        tbody.querySelectorAll("button[data-act]").forEach(btn => {
+          btn.addEventListener("click", () => {
+            const act = btn.getAttribute("data-act");
+            const id = btn.getAttribute("data-id");
+            if (act === "edit") startEdit(id);
+            if (act === "del") delEntry(id);
+          });
+        });
+      }
+
+      // ===== Render Wallets =====
+      renderWallets();
+    }
+
+    function renderWallets(){
+      const list = getWalletList();
+      const wb = calcWalletBalances();
+      let grandTotal = 0;
+
+      walletGrid.innerHTML = "";
+      for (const w of list){
+        const data = wb[w.id] || { current: 0, totalIn: 0, totalOut: 0 };
+        grandTotal += data.current;
+
+        const div = document.createElement("div");
+        div.className = "wallet-item";
+        div.setAttribute("data-wallet", w.id);
+        if (w.color){
+          div.style.setProperty("--w-color", w.color);
+        }
+
+        const netChange = data.totalIn - data.totalOut;
+        let deltaText = "";
+        if (netChange > 0){
+          deltaText = `<span class="good">▲ +${fmtIDR(netChange)}</span>`;
+        } else if (netChange < 0){
+          deltaText = `<span class="bad">▼ ${fmtIDR(netChange)}</span>`;
+        } else {
+          deltaText = `<span style="color:var(--muted)">— tidak ada perubahan</span>`;
+        }
+
+        div.innerHTML = `
+          <button class="w-edit-btn" data-wallet-edit="${w.id}">Set Saldo</button>
+          <div class="w-icon">${w.icon}</div>
+          <div class="w-name">${escapeHtml(w.name)}</div>
+          <div class="w-balance ${data.current < 0 ? 'bad' : data.current > 0 ? 'good' : ''}">${fmtIDR(data.current)}</div>
+          <div class="w-delta">${deltaText}</div>
+        `;
+        walletGrid.appendChild(div);
+      }
+
+      // Add dashed "+ Tambah Dompet" card at the end
+      const addCard = document.createElement("div");
+      addCard.className = "wallet-add-card";
+      addCard.id = "cardAddWallet";
+      addCard.innerHTML = `
+        <div style="font-size: 22px; line-height:1;">➕</div>
+        <div style="font-size: 12px; font-weight: 700;">Tambah Dompet</div>
+        <div style="font-size: 11px; opacity: .7;">Bank, E-Wallet, Kas</div>
+      `;
+      addCard.addEventListener("click", openAddWalletModal);
+      walletGrid.appendChild(addCard);
+
+      // Grand total
+      walletGrandTotal.textContent = fmtIDR(grandTotal);
+      walletTotalPill.textContent = `Total: ${fmtIDR(grandTotal)}`;
+
+      // Wallet edit buttons
+      walletGrid.querySelectorAll("button[data-wallet-edit]").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          openWalletModal(btn.getAttribute("data-wallet-edit"));
+        });
+      });
+
+      // Clicking a card directly selects that wallet in the input form
+      walletGrid.querySelectorAll(".wallet-item").forEach(card => {
+        card.style.cursor = "pointer";
+        card.addEventListener("click", () => {
+          const wid = card.getAttribute("data-wallet");
+          const w = list.find(x => x.id === wid);
+          if (w && inpPayMethod) {
+            inpPayMethod.value = w.name;
+            inpAmount.focus();
+          }
+        });
+      });
+    }
+
+    function startEdit(id){
+      const e = db.entries.find(x => x.id === id);
+      if (!e) return;
+      editingId = id;
+      inpType.value = e.type;
+      inpAmount.value = e.amount;
+      inpDate.value = e.date;
+      inpDay.value = e.day || "";
+      syncPaymentMethods(e.payMethod && e.payMethod !== "-" ? e.payMethod : "");
+      inpNote.value = e.note || "";
+      btnAdd.textContent = "Simpan Perubahan";
+      btnCancelEdit.classList.remove("hidden");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function delEntry(id){
+      const e = db.entries.find(x => x.id === id);
+      if (!e) return;
+      const ok = confirm(`Hapus transaksi ini?\n${e.date} - ${e.note} - ${fmtIDR(e.amount)}`);
+      if (!ok) return;
+      db.entries = db.entries.filter(x => x.id !== id);
+      saveDB(db);
+      refresh();
+    }
+
+    function escapeHtml(str){
+      return String(str ?? "")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
+  </script>
+</body>
+</html>
